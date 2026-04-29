@@ -4,7 +4,7 @@
  * Plugin Name: Pakasir for WooCommerce
  * Plugin URI:  https://pakasir.com/
  * Description: Pakasir Payment Gateway (QRIS, Virtual Account, etc) for WooComerce. (compatible with Indonesia banks/e-wallets only)
- * Version:     1.2.1
+ * Version:     1.3.1
  * Author:      PT. Geksa Eksplorasi Satu
  * Author URI:  https://gx1.org/
  * License:     GPL v2 or later

@@ -10,7 +10,9 @@ class WC_Gateway_Pakasir extends WC_Payment_Gateway {
     private $pakasir_slug;
     private $pakasir_redirect_url;
     private $pakasir_qris_only;
-    public function __construct() {
+	private $pakasir_completed_status;
+
+	public function __construct() {
         $this->id = 'pakasir';
         $this->method_title = 'Pakasir';
         $this->method_description = 'Pakasir Payment Gateway for WooCommerce';
@@ -26,6 +28,7 @@ class WC_Gateway_Pakasir extends WC_Payment_Gateway {
         $this->pakasir_slug = $this->get_option('pakasir_slug');
         $this->pakasir_redirect_url = $this->get_option('pakasir_redirect_url');
         $this->pakasir_qris_only = $this->get_option('pakasir_qris_only');
+        $this->pakasir_completed_status = $this->get_option('pakasir_completed_status');
 
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     }
@@ -70,7 +73,15 @@ class WC_Gateway_Pakasir extends WC_Payment_Gateway {
               'title' => 'Redirect URL',
               'type' => 'text',
               'description' => 'Link redirect setelah pembayaran berhasil',
-              'default' => get_site_url().'/my-account/orders',
+              'default' => get_site_url().'/my-account/view-order/{id}',
+              'desc_tip' => true
+            ),
+            'pakasir_completed_status' => array(
+              'title' => 'Complete status',
+              'type' => 'select',
+              'description' => 'Status order saat pembayaran berhasil',
+              'default' => 'processing',
+			  'options' => wc_get_order_statuses(),
               'desc_tip' => true
             ),
             'pakasir_qris_only' => array(
@@ -89,6 +100,7 @@ class WC_Gateway_Pakasir extends WC_Payment_Gateway {
         $amount = $order->get_total();
         $slug = $this->pakasir_slug;
         $redir = $this->pakasir_redirect_url;
+		$redir = str_replace('{id}', $order_id, $redir);
         $qris = $this->pakasir_qris_only == 'yes' ? '&qris_only=1' : '';
         $url = "https://app.pakasir.com/pay/{$slug}/{$amount}/?order_id={$order_id}{$qris}&redirect={$redir}";
 
@@ -147,6 +159,13 @@ function pakasir_webhook(WP_REST_Request $request) {
   }
 
   $order->payment_complete();
+	
+	$completed_status = isset($pakasir_settings['pakasir_completed_status']) ? $pakasir_settings['pakasir_completed_status'] : '';
+	// kalau ada setting, update status order sesuai pilihan
+	if ($completed_status) {
+		$order->update_status($completed_status, 'Status diubah sesuai pengaturan Pakasir');
+	}
+	
   return new WP_REST_Response(['message' => 'Order updated'], 200);
 }
 
